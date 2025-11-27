@@ -1,7 +1,6 @@
 variable "region" {
   type        = string
   description = "AWS region"
-  default     = "ap-northeast-1"
 }
 
 variable "environment" {
@@ -15,14 +14,21 @@ variable "name_prefix" {
   default     = "mycorp-dev"
 }
 
-variable "vpc_id" {
-  type        = string
-  description = "Existing VPC ID where bastion will be placed"
+variable "terraform_dev_profile" {
+  type = string
+  description = "AWS connection credential"
 }
 
-variable "public_subnet_id" {
+variable "vpc_cidr" {
   type        = string
-  description = "Public subnet ID for bastion instance"
+  description = "CIDR block for the managed VPC"
+  default     = "172.31.0.0/16"
+}
+
+variable "eks_cluster_name" {
+  type        = string
+  description = "Cluster name used when tagging subnets"
+  default     = "game-test-env"
 }
 
 variable "ssh_allowed_cidr" {

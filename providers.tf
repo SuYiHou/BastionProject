@@ -1,22 +1,23 @@
 terraform {
   required_providers {
     aws = {
-      source  = "hashicorp/terraform-provider-aws"
+      source  = "hashicorp/aws"
       version = "~> 6.0"
     }
   }
 
-  backend "s3" {
-    bucket            = "game-slot-terraform-state"
-    key               = "bastion/terraform.tfstate"
-    region            = "ap-southeast-2"
-    dynamodb_endpoint = "terraform-locks"
-    encrypt           = true
-  }
+  # backend "s3" {
+  #   bucket         = "game-slot-terraform-state"
+  #   key            = "bastion/terraform.tfstate"
+  #   region         = "ap-southeast-2"
+  #   dynamodb_table = "terraform-locks"
+  #   encrypt        = true
+  # }
 }
 
 provider "aws" {
-  region = "ap-southeast-2"
+  region = var.region
+  profile = var.terraform_dev_profile
 
   default_tags {
     tags = {
@@ -27,4 +28,3 @@ provider "aws" {
     }
   }
 }
-
