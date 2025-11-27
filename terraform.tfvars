@@ -1,7 +1,7 @@
 environment      = "dev"
 name_prefix      = "mycorp-dev"
-vpc_id           = "vpc-xxxxxxxx"
-public_subnet_id = "subnet-xxxxxxxx"
+vpc_id           = module.network.vpc_id
+public_subnet_id = module.network.public_subnet_ids[0]
 ssh_allowed_cidr = [
   "153.242.124.14/32"
 ]
