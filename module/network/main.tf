@@ -26,6 +26,7 @@ resource "aws_vpc" "this" {
 
   tags = merge(local.base_tags, {
     Name = "${var.name}-vpc"
+    Owner = "Zhaojiyu"
   })
 }
 
