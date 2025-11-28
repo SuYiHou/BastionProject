@@ -61,3 +61,18 @@ variable "root_volume_size" {
   type        = number
   description = "Size (GiB) of the root EBS volume"
 }
+
+variable "force_detach_policies" {
+  type        = bool
+  description = "Whether to forcibly detach policies before destroying the role"
+}
+
+variable "create_instance_profile" {
+  type        = bool
+  description = "If true, create an instance profile tied to the role"
+}
+
+variable "instance_profile_name" {
+  type        = string
+  description = "Optional custom instance profile name"
+}

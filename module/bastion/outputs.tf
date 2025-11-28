@@ -24,3 +24,4 @@ output "iam_role_name" {
   description = "IAM role associated with the bastion"
   value       = aws_iam_role.this.name
 }
+

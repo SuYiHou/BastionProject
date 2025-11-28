@@ -10,11 +10,11 @@ module "network" {
 module "security_groups" {
   source      = "./module/security_group"
   name_prefix = "${var.name_prefix}-${var.environment}"
-  name = "${var.name_prefix}-${var.environment}"
+  name        = "${var.name_prefix}-${var.environment}"
   environment = var.environment
   vpc_id      = module.network.vpc_id
-  tags        = {} // 需要可额外 merge
-  vpc_cidr = var.vpc_cidr
+  tags = {} // 需要可额外 merge
+  vpc_cidr    = var.vpc_cidr
   security_groups = {
     bastion = {
       description = "Bastion host ingress policy"
@@ -46,14 +46,14 @@ module "security_groups" {
           protocol    = "tcp"
           from_port   = 22
           to_port     = 22
-          sg_sources  = ["bastion"]
+          sg_sources = ["bastion"]
         },
         {
           description = "Intra-node communication"
           protocol    = "-1"
           from_port   = 0
           to_port     = 0
-          sg_sources  = ["private_compute"]
+          sg_sources = ["private_compute"]
         }
       ]
       egress = [
@@ -91,7 +91,7 @@ module "security_groups" {
           protocol    = "-1"
           from_port   = 0
           to_port     = 0
-          sg_sources  = ["private_compute"]
+          sg_sources = ["private_compute"]
         }
       ]
     }
@@ -101,7 +101,8 @@ module "security_groups" {
 module "bastion" {
   source = "./module/bastion"
 
-  bastion_sg_id = module.security_groups.security_group_ids["bastion"]
+  bastion_sg_id     = module.security_groups.security_group_ids["bastion"]
+  iam_role_name = module.iam.role_name
   name_prefix       = var.name_prefix
   environment       = var.environment
   vpc_id            = module.network.vpc_id
@@ -112,4 +113,14 @@ module "bastion" {
   ami_id            = var.ami_id
   enable_ssm        = var.enable_ssm
   root_volume_size  = var.root_volume_size
+}
+
+module "iam" {
+  source = "./module/iam"
+
+  force_detach_policies   = true
+  create_instance_profile = false
+  instance_profile_name   = null
+  environment             = var.environment
+  name                    = var.name
 }
