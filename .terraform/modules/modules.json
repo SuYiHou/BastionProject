@@ -1,1 +1,1 @@
-{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"network","Source":"./module/network","Dir":"module/network"},{"Key":"security_groups","Source":"./module/security_group","Dir":"module/security_group"}]}
+{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"bastion","Source":"./module/bastion","Dir":"module/bastion"},{"Key":"network","Source":"./module/network","Dir":"module/network"},{"Key":"security_groups","Source":"./module/security_group","Dir":"module/security_group"}]}

@@ -32,9 +32,9 @@ variable "eks_cluster_name" {
 }
 
 variable "ssh_allowed_cidr" {
-  type = list(string)
+  type        = list(string)
   description = "CIDR list allowed to SSH"
-  default = []
+  default     = []
 }
 
 variable "instance_type" {

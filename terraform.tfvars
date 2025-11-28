@@ -1,5 +1,5 @@
 environment      = "dev"
-name_prefix      = "mycorp-dev"
+name_prefix      = "mycorp"
 vpc_cidr         = "10.0.0.0/16"
 eks_cluster_name = "game-test"
 ssh_allowed_cidr = [
