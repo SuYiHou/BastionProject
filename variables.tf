@@ -55,5 +55,9 @@ variable "ami_id" {
 variable "enable_ssm" {
   type        = bool
   description = "Whether to allow SSM Session Manager access"
-  default     = true
+}
+
+variable "root_volume_size" {
+  type        = number
+  description = "Size (GiB) of the root EBS volume"
 }

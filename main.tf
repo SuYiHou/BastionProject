@@ -101,6 +101,7 @@ module "security_groups" {
 module "bastion" {
   source = "./module/bastion"
 
+  bastion_sg_id = module.security_groups.security_group_ids["bastion"]
   name_prefix       = var.name_prefix
   environment       = var.environment
   vpc_id            = module.network.vpc_id
@@ -110,4 +111,5 @@ module "bastion" {
   key_name          = var.key_name
   ami_id            = var.ami_id
   enable_ssm        = var.enable_ssm
+  root_volume_size  = var.root_volume_size
 }

@@ -1,3 +1,4 @@
+// Naming inputs keep every resource aligned with the wider platform conventions.
 variable "name_prefix" {
   type        = string
   description = "Prefix used when naming bastion resources"
@@ -8,6 +9,7 @@ variable "environment" {
   description = "Environment identifier (dev/prod/etc.)"
 }
 
+// Network placement and connectivity configuration.
 variable "vpc_id" {
   type        = string
   description = "VPC ID where the bastion host will be deployed"
@@ -29,10 +31,10 @@ variable "ssh_allowed_cidr" {
   default     = []
 }
 
+// Instance sizing, access, and AMI selection.
 variable "instance_type" {
   type        = string
   description = "EC2 instance type for the bastion"
-  default     = "t3.micro"
 }
 
 variable "key_name" {
@@ -48,17 +50,21 @@ variable "ami_id" {
 variable "enable_ssm" {
   type        = bool
   description = "If true, attach the AmazonSSMManagedInstanceCore policy"
-  default     = true
 }
 
 variable "root_volume_size" {
   type        = number
   description = "Size (GiB) of the root EBS volume"
-  default     = 20
 }
 
+// Optional custom tags merged on top of the defaults.
 variable "tags" {
   type        = map(string)
   description = "Optional extra tags to merge onto each resource"
   default     = {}
+}
+
+variable "bastion_sg_id" {
+  type        = string
+  description = "Security group ID to attach to the bastion instance"
 }

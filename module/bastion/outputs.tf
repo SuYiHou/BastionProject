@@ -1,3 +1,4 @@
+// Basic identity details for the bastion instance so callers can reference it directly.
 output "instance_id" {
   description = "ID of the bastion EC2 instance"
   value       = aws_instance.this.id
@@ -15,9 +16,10 @@ output "instance_private_ip" {
 
 output "security_group_id" {
   description = "Security group attached to the bastion"
-  value       = aws_security_group.this.id
+  value       = var.bastion_sg_id
 }
 
+// IAM integration data, useful when granting the bastion more permissions externally.
 output "iam_role_name" {
   description = "IAM role associated with the bastion"
   value       = aws_iam_role.this.name
