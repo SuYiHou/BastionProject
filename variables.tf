@@ -15,7 +15,7 @@ variable "name_prefix" {
 }
 
 variable "terraform_dev_profile" {
-  type = string
+  type        = string
   description = "AWS connection credential"
 }
 
@@ -32,14 +32,14 @@ variable "eks_cluster_name" {
 }
 
 variable "ssh_allowed_cidr" {
-  type        = list(string)
+  type = list(string)
   description = "CIDR list allowed to SSH"
-  default     = []
+  default = []
 }
 
 variable "instance_type" {
-  type        = string
-  default     = "t3.micro"
+  type    = string
+  default = "t3.micro"
 }
 
 variable "key_name" {

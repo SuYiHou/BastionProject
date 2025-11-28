@@ -4,7 +4,7 @@ variable "name" {
 }
 
 variable "name_prefix" {
-  type = string
+  type        = string
   description = "Equal to network module"
 }
 
@@ -20,15 +20,15 @@ variable "environment" {
 }
 
 variable "vpc_id" {
-  type = string
+  type        = string
   description = "Target VPC security group"
 }
 
 # 额外的自定义标签，按需传入
 variable "tags" {
-  type        = map(string)
+  type = map(string)
   description = "Additional tags to merge onto every resource"
-  default     = {}
+  default = {}
 }
 
 /*
@@ -38,13 +38,23 @@ variable "tags" {
 variable "security_groups" {
   type = map(object({
     description = string
+
     ingress = list(object({
       description = string
-      protocol = string
-      from_port = string
-      to_port=string
-      cidr_blocks=optional(list(string),[])
-      sg_sources=optional(list(string),[])
+      protocol    = string
+      from_port   = number
+      to_port     = number
+      cidr_blocks = optional(list(string), [])
+      sg_sources  = optional(list(string), [])
+    }))
+
+    egress = list(object({
+      description = string
+      protocol    = string
+      from_port   = number
+      to_port     = number
+      cidr_blocks = optional(list(string), [])
+      sg_sources  = optional(list(string), [])
     }))
   }))
   description = "Declarative definition of all security groups and their rules"
