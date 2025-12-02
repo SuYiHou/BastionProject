@@ -1,3 +1,7 @@
+// -----------------------------------------------------------------------------
+// 根模块变量说明：为初学者准备的集中入口，统一在这里调整 VPC、Bastion、EKS 的全部参数。
+// 建议：结合 terraform.tfvars 示例文件查看真实取值，或在 CI/CD 中使用 TF_VAR_ 环境变量。
+// -----------------------------------------------------------------------------
 variable "region" {
   type        = string
   description = "AWS region"
@@ -75,4 +79,82 @@ variable "create_instance_profile" {
 variable "instance_profile_name" {
   type        = string
   description = "Optional custom instance profile name"
+}
+
+variable "eks_cluster_version" {
+  type        = string
+  description = "Desired Kubernetes version for the EKS control plane"
+  default     = "1.29"
+}
+
+variable "eks_cluster_enabled_log_types" {
+  type        = list(string)
+  description = "Control plane log types to enable (api, audit, authenticator, controllerManager, scheduler)"
+  default     = []
+}
+
+variable "eks_cluster_endpoint_private_access" {
+  type        = bool
+  description = "Expose the Kubernetes API over the VPC private subnets"
+  default     = true
+}
+
+variable "eks_cluster_endpoint_public_access" {
+  type        = bool
+  description = "Expose the Kubernetes API via public internet"
+  default     = false
+}
+
+variable "eks_node_instance_types" {
+  type        = list(string)
+  description = "Allowed instance types for the default managed node group"
+  default     = ["t3.medium"]
+}
+
+variable "eks_node_desired_size" {
+  type        = number
+  description = "Desired worker node count"
+  default     = 2
+}
+
+variable "eks_node_min_size" {
+  type        = number
+  description = "Minimum worker node count"
+  default     = 1
+}
+
+variable "eks_node_max_size" {
+  type        = number
+  description = "Maximum worker node count"
+  default     = 3
+}
+
+variable "eks_node_disk_size" {
+  type        = number
+  description = "EBS volume size (GiB) for each worker"
+  default     = 50
+}
+
+variable "eks_node_capacity_type" {
+  type        = string
+  description = "ON_DEMAND or SPOT"
+  default     = "ON_DEMAND"
+}
+
+variable "eks_node_labels" {
+  type        = map(string)
+  description = "Kubernetes labels attached to the managed node group"
+  default     = {}
+}
+
+variable "eks_node_tags" {
+  type        = map(string)
+  description = "AWS tags merged onto the managed node group"
+  default     = {}
+}
+
+variable "eks_node_max_unavailable" {
+  type        = number
+  description = "How many nodes can be unavailable during rolling updates"
+  default     = 1
 }

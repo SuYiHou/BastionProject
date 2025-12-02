@@ -1,3 +1,9 @@
+// -----------------------------------------------------------------------------
+// Bastion 模块：部署最小可用的跳板机（单台 EC2）。
+// - 自动创建/复用 IAM 角色 + Instance Profile；
+// - 强制 IMDSv2、磁盘加密、标签统一；
+// - 外部传入安全组、公有子网、AMI、KeyPair 等参数即可。
+// -----------------------------------------------------------------------------
 // Build a shared tag map so every resource created by this module is labeled identically.
 locals {
   base_tags = merge({
