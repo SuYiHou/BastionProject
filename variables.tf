@@ -158,3 +158,45 @@ variable "eks_node_max_unavailable" {
   description = "How many nodes can be unavailable during rolling updates"
   default     = 1
 }
+
+variable "observability_log_retention_days" {
+  type        = number
+  description = "Retention days for the EKS control plane log group"
+  default     = 30
+}
+
+variable "observability_app_log_retention_days" {
+  type        = number
+  description = "Retention days for the shared application log group"
+  default     = 30
+}
+
+variable "observability_create_archive_bucket" {
+  type        = bool
+  description = "Whether to create a centralized S3 bucket for long-term log storage"
+  default     = true
+}
+
+variable "observability_archive_bucket_name" {
+  type        = string
+  description = "Optional custom name for the log archive bucket"
+  default     = null
+}
+
+variable "observability_archive_transition_days" {
+  type        = number
+  description = "How many days before archived logs transition to Glacier"
+  default     = 90
+}
+
+variable "observability_archive_expiration_days" {
+  type        = number
+  description = "How many days before archived logs are deleted"
+  default     = 365
+}
+
+variable "observability_archive_force_destroy" {
+  type        = bool
+  description = "Allow Terraform to delete the archive bucket even if it contains objects"
+  default     = false
+}

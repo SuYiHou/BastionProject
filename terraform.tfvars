@@ -37,3 +37,12 @@ eks_node_labels = {
 }
 eks_node_tags            = {} # 需要附加到节点组资源本身的 AWS Tag
 eks_node_max_unavailable = 1  # 滚动升级时最多允许 1 台节点不可用
+
+# ------------------------- Observability / 日志归档 -------------------------
+observability_log_retention_days      = 30    # 控制面日志在 CloudWatch 中保留 30 天
+observability_app_log_retention_days  = 30    # 应用日志保留天数，可与 Fluent Bit/FireLens 对接
+observability_create_archive_bucket   = true  # 是否创建集中式日志归档桶
+observability_archive_bucket_name     = null  # 如需自定义 S3 名称可在此处填写
+observability_archive_transition_days = 90    # 90 天后转入 Glacier，降低成本
+observability_archive_expiration_days = 365   # 365 天后自动删除归档日志
+observability_archive_force_destroy   = false # 除错环境可设为 true，便于销毁非空桶

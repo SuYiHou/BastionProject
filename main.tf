@@ -188,7 +188,25 @@ module "iam_eks_node_role" {
 }
 
 // ----------------------------------------------------------------------------
-// 7) EKS：使用自定义模块创建控制面 + 默认托管节点组，完全复用前面输出的 VPC、SG、IAM。
+// 7) Observability：集中管理 CloudWatch Log Group + 日志归档桶，方便后续扩展到 ELK/Firehose。
+// ----------------------------------------------------------------------------
+module "observability" {
+  source = "./module/observability"
+
+  environment                       = var.environment
+  name_prefix                       = var.name_prefix
+  cluster_name                      = "${var.eks_cluster_name}-${var.environment}"
+  log_retention_in_days             = var.observability_log_retention_days
+  application_log_retention_in_days = var.observability_app_log_retention_days
+  create_archive_bucket             = var.observability_create_archive_bucket
+  archive_bucket_name               = var.observability_archive_bucket_name
+  archive_transition_days           = var.observability_archive_transition_days
+  archive_expiration_days           = var.observability_archive_expiration_days
+  archive_force_destroy             = var.observability_archive_force_destroy
+}
+
+// ----------------------------------------------------------------------------
+// 8) EKS：使用自定义模块创建控制面 + 默认托管节点组，完全复用前面输出的 VPC、SG、IAM。
 // ----------------------------------------------------------------------------
 module "eks" {
   source = "./module/eks"
@@ -215,4 +233,7 @@ module "eks" {
   node_group_max_unavailable = var.eks_node_max_unavailable
   node_group_labels          = var.eks_node_labels
   node_group_tags            = var.eks_node_tags
+
+  // 需在 EKS 启用日志前确保 CloudWatch Log Group 已创建，避免默认 7 天保留期。
+  depends_on = [module.observability]
 }

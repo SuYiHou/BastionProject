@@ -67,3 +67,14 @@ variable "instance_profile_name" {
   description = "Optional custom instance profile name"
   default     = null
 }
+
+variable "inline_policy_statements" {
+  type = map(list(object({
+    sid       = optional(string)
+    effect    = optional(string, "Allow")
+    actions   = list(string)
+    resources = list(string)
+    condition = optional(map(map(string)))
+  })))
+  default = {}
+}

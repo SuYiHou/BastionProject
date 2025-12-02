@@ -11,6 +11,26 @@ locals {
   }, var.tags)
 }
 
+locals {
+  rendered_inline_policies = {
+    for policy_name, statements in var.inline_policy_statements :
+    policy_name => jsonencode({
+      Version   = "2012-10-17"
+      Statement = [
+        for stmt in statements : merge(
+          {
+            Sid      = try(stmt.sid, null)
+            Effect   = try(stmt.effect, "Allow")
+            Action   = stmt.actions
+            Resource = stmt.resources
+          },
+            stmt.condition == null ? {} : { Condition = stmt.condition }
+        )
+      ]
+    })
+  }
+}
+
 // Construct the assume role policy to allow both AWS service principals and specific ARNs.
 data "aws_iam_policy_document" "assume_role" {
   // 当调用方传入 service principal 列表时，循环生成 allow sts:AssumeRole 语句。
@@ -65,7 +85,7 @@ resource "aws_iam_role_policy" "inline" {
   for_each = var.inline_policies
   name     = each.key
   role     = aws_iam_role.this.id
-  policy   = each.value
+  policy = local.rendered_inline_policies[each.key]
 }
 
 // 如需 EC2/SSM 等服务使用该角色，则自动创建 Instance Profile（一个角色最多只能绑一个 profile）。
