@@ -22,6 +22,6 @@ output "security_group_id" {
 // IAM integration data, useful when granting the bastion more permissions externally.
 output "iam_role_name" {
   description = "IAM role associated with the bastion"
-  value       = aws_iam_role.this.name
+  // role 可能来自外部 (调用方传入) 或当前模块自建；这里返回统一的 local，方便调用方无需关心来源。
+  value = local.bastion_iam_role_name
 }
-

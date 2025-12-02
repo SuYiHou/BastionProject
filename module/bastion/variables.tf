@@ -68,3 +68,18 @@ variable "bastion_sg_id" {
   type        = string
   description = "Security group ID to attach to the bastion instance"
 }
+
+// 以下两个变量用于“复用 IAM 模块的产物”：
+// - 外部 want 复用角色/profile 时赋值；
+// - 若保持默认 null，则当前模块会自建 role/profile。
+variable "iam_role_name" {
+  type        = string
+  description = "Existing IAM role name to reuse for the bastion host"
+  default     = null
+}
+
+variable "iam_instance_profile_name" {
+  type        = string
+  description = "Existing IAM instance profile name that surfaces the provided role"
+  default     = null
+}
