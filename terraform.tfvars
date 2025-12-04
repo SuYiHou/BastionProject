@@ -46,7 +46,10 @@ observability_archive_bucket_name     = null  # 如需自定义 S3 名称可在�
 observability_archive_transition_days = 90    # 90 天后转入 Glacier，降低成本
 observability_archive_expiration_days = 365   # 365 天后自动删除归档日志
 observability_archive_force_destroy   = false # 除错环境可设为 true，便于销毁非空桶
-
+game_name = [
+  "angle",
+  "read"
+]
 # ------------------------- 微服务构建/发布矩阵（GitLab Monorepo） -------------------------
 microservices = {
   service_a = {

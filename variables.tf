@@ -201,6 +201,12 @@ variable "observability_archive_force_destroy" {
   default     = false
 }
 
+variable "game_name" {
+  type        = list(string)
+  description = "All different game"
+  default     = []
+}
+
 // -----------------------------------------------------------------------------
 // microservices：描述 monorepo 中每个微服务的 ECR、CodeBuild、CodeDeploy 配置。
 // key = 微服务标识（例如 auth、payment），value 是一个 map（结构见 README 或注释）。

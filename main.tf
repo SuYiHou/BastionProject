@@ -146,9 +146,11 @@ locals {
     codedeploy_target_tag_key           = null
     codedeploy_target_tag_value         = null
   }
-
-  microservices = { for svc_name, svc_cfg in var.microservices :
-    svc_name => merge(local.microservice_defaults, svc_cfg)
+  microservices = {
+    for game in var.gamename : game =>{
+      ecr_repository_name      = "game-slot-${game}"
+      ecr_image_tag_mutability = "IMMUTABLE"
+    }
   }
 }
 
@@ -290,7 +292,7 @@ module "ecr_microservices" {
   source   = "./module/ecr"
 
   environment          = var.environment
-  repository_name      = coalesce(each.value.ecr_repository_name, "${var.name_prefix}-${var.environment}-${each.key}")
+  repository_name = coalesce(each.value.ecr_repository_name, "game-slot-${each.key}")
   image_tag_mutability = each.value.ecr_image_tag_mutability
   scan_on_push         = each.value.ecr_scan_on_push
   encryption_type      = each.value.ecr_encryption_type
