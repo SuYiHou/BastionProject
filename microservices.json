@@ -1,0 +1,34 @@
+{
+  "game-slot-angel": {
+    "path": "game/game-slot-angel",
+    "buildspec": "ci/buildspec-angel.yml",
+    "deploy_group": "mycorp-dev-angel-asg",
+    "image_tag_mutability": "IMMUTABLE",
+    "lifecycle_policy": {
+      "rules": [
+        {
+          "rulePriority": 1,
+          "description": "Keep last 5 release images",
+          "selection": {
+            "tagStatus": "tagged",
+            "tagPrefixList": ["release-"],
+            "countType": "imageCountMoreThan",
+            "countNumber": 1
+          },
+          "action": { "type": "expire" }
+        }
+      ]
+    }
+  },
+  "game-slot-bonanza": {
+    "path": "game/game-slot-bonanza",
+    "buildspec": "ci/buildspec-bonanza.yml",
+    "deploy_group": "mycorp-dev-bonanza-asg"
+  },
+  "game-slot-snake": {
+    "path": "game/game-slot-snake",
+    "buildspec": "ci/buildspec-snake.yml",
+    "tag_prefixes": ["snake-release"],
+    "deploy_group": "mycorp-dev-snake-asg"
+  }
+}

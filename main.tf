@@ -109,6 +109,50 @@ module "security_groups" {
 }
 
 // ----------------------------------------------------------------------------
+// 针对 monorepo 微服务：将所有服务及其 ECR/CI 参数汇总到 microservices 变量中，
+// 这里先定义默认值并 merge 用户传入的配置，后面统一 for_each 创建一批 ECR/CICD 模块。
+// ----------------------------------------------------------------------------
+locals {
+  microservice_defaults = {
+    ecr_repository_name      = null
+    ecr_image_tag_mutability = "MUTABLE"
+    ecr_scan_on_push         = true
+    ecr_encryption_type      = "AES256"
+    ecr_kms_key_arn          = null
+    ecr_lifecycle_policy     = null
+    ecr_repository_policy    = null
+
+    codebuild_source_type             = null
+    codebuild_source_location         = null
+    codebuild_buildspec               = "buildspec.yml"
+    codebuild_image                   = "aws/codebuild/standard:6.0"
+    codebuild_compute_type            = "BUILD_GENERAL1_SMALL"
+    codebuild_privileged_mode         = false
+    codebuild_environment_variables   = {}
+    codebuild_artifact_path           = "build"
+    codebuild_log_retention_days      = 30
+    codebuild_timeout_minutes         = 30
+    codebuild_git_clone_depth         = 1
+    codebuild_ecr_access              = true
+    codebuild_extra_policy_statements = []
+
+    cicd_create_artifact_bucket        = true
+    cicd_artifact_bucket_name          = null
+    cicd_artifact_bucket_force_destroy = false
+    cicd_existing_artifact_bucket_arn  = null
+
+    codedeploy_deployment_config        = "CodeDeployDefault.AllAtOnce"
+    codedeploy_auto_scaling_group_names = []
+    codedeploy_target_tag_key           = null
+    codedeploy_target_tag_value         = null
+  }
+
+  microservices = { for svc_name, svc_cfg in var.microservices :
+    svc_name => merge(local.microservice_defaults, svc_cfg)
+  }
+}
+
+// ----------------------------------------------------------------------------
 // 3) IAM：先为 Bastion 创建专属角色/实例配置文件，后续传递给 Bastion 模块复用。
 // ----------------------------------------------------------------------------
 module "iam_bastion" {
@@ -239,63 +283,59 @@ module "eks" {
 }
 
 // ----------------------------------------------------------------------------
-// 9) ECR：集中创建镜像仓库，方便 CodeBuild 推送/应用拉取。
+// 9) 每个微服务 1 个 ECR 仓库：命名规则为 <prefix>-<env>-<service>，方便按服务独立发布。
 // ----------------------------------------------------------------------------
-module "ecr" {
-  source = "./module/ecr"
+module "ecr_microservices" {
+  for_each = local.microservices
+  source   = "./module/ecr"
 
   environment          = var.environment
-  repository_name      = coalesce(var.ecr_repository_name, "${var.name_prefix}-${var.environment}-app")
-  image_tag_mutability = var.ecr_image_tag_mutability
-  scan_on_push         = var.ecr_scan_on_push
-  encryption_type      = var.ecr_encryption_type
-  kms_key_arn          = var.ecr_kms_key_arn
-  lifecycle_policy     = var.ecr_lifecycle_policy
-  repository_policy    = var.ecr_repository_policy
-}
-
-locals {
-  cicd_env_vars = var.ecr_repository_name != null && trim(var.ecr_repository_name) != "" ? merge(
-    var.cicd_codebuild_environment_variables,
-    { IMAGE_REPO = module.ecr.repository_url }
-  ) : var.cicd_codebuild_environment_variables
+  repository_name      = coalesce(each.value.ecr_repository_name, "${var.name_prefix}-${var.environment}-${each.key}")
+  image_tag_mutability = each.value.ecr_image_tag_mutability
+  scan_on_push         = each.value.ecr_scan_on_push
+  encryption_type      = each.value.ecr_encryption_type
+  kms_key_arn          = each.value.ecr_kms_key_arn
+  lifecycle_policy     = each.value.ecr_lifecycle_policy
+  repository_policy    = each.value.ecr_repository_policy
 }
 
 // ----------------------------------------------------------------------------
-// 10) CI/CD：CodeBuild + CodeDeploy，负责把 Git 仓库里的代码构建成产物，
-//     再将产物推送到 AutoScaling 组或打上特定标签的 EC2 实例。
-//     你需要提供仓库地址、buildspec、ASG 名称或标签这类信息。
+// 10) 每个微服务一套 CodeBuild + CodeDeploy：GitLab 提交只需触发对应服务的 CI，即可构建/部署。
 // ----------------------------------------------------------------------------
-module "cicd" {
-  source = "./module/cicd"
+module "cicd_microservices" {
+  for_each = local.microservices
+  source   = "./module/cicd"
 
   environment = var.environment
-  name_prefix = var.name_prefix
+  name_prefix = "${var.name_prefix}-${each.key}"
 
-  // Artifact 桶配置：可以沿用默认自动创建，也可传入既有桶名/ARN。
-  create_artifact_bucket        = var.cicd_create_artifact_bucket
-  artifact_bucket_name          = var.cicd_artifact_bucket_name
-  artifact_bucket_force_destroy = var.cicd_artifact_bucket_force_destroy
-  existing_artifact_bucket_arn  = var.cicd_existing_artifact_bucket_arn
+  create_artifact_bucket        = each.value.cicd_create_artifact_bucket
+  artifact_bucket_name          = each.value.cicd_artifact_bucket_name
+  artifact_bucket_force_destroy = each.value.cicd_artifact_bucket_force_destroy
+  existing_artifact_bucket_arn  = each.value.cicd_existing_artifact_bucket_arn
 
-  // CodeBuild 基础信息：源码类型、仓库地址、buildspec、构建容器、环境变量等。
-  codebuild_source_type             = var.cicd_codebuild_source_type
-  codebuild_source_location         = var.cicd_codebuild_source_location
-  codebuild_buildspec               = var.cicd_codebuild_buildspec
-  codebuild_image                   = var.cicd_codebuild_image
-  codebuild_compute_type            = var.cicd_codebuild_compute_type
-  codebuild_privileged_mode         = var.cicd_codebuild_privileged_mode
-  codebuild_environment_variables   = local.cicd_env_vars
-  codebuild_artifact_path           = var.cicd_codebuild_artifact_path
-  codebuild_log_retention_in_days   = var.cicd_codebuild_log_retention_days
-  codebuild_timeout_minutes         = var.cicd_codebuild_timeout_minutes
-  codebuild_git_clone_depth         = var.cicd_codebuild_git_clone_depth
-  codebuild_ecr_access              = var.cicd_codebuild_ecr_access
-  codebuild_extra_policy_statements = var.cicd_codebuild_extra_policy_statements
+  codebuild_source_type     = each.value.codebuild_source_type
+  codebuild_source_location = each.value.codebuild_source_location
+  codebuild_buildspec       = each.value.codebuild_buildspec
+  codebuild_image           = each.value.codebuild_image
+  codebuild_compute_type    = each.value.codebuild_compute_type
+  codebuild_privileged_mode = each.value.codebuild_privileged_mode
+  codebuild_environment_variables = merge(each.value.codebuild_environment_variables, {
+    IMAGE_REPO = module.ecr_microservices[each.key].repository_url
+  })
+  codebuild_artifact_path           = each.value.codebuild_artifact_path
+  codebuild_log_retention_in_days   = each.value.codebuild_log_retention_days
+  codebuild_timeout_minutes         = each.value.codebuild_timeout_minutes
+  codebuild_git_clone_depth         = each.value.codebuild_git_clone_depth
+  codebuild_ecr_access              = each.value.codebuild_ecr_access
+  codebuild_extra_policy_statements = each.value.codebuild_extra_policy_statements
 
-  // CodeDeploy 目标：传入 AutoScaling Group 名称或 EC2 Tag 键值（二选一）。
-  codedeploy_deployment_config        = var.cicd_codedeploy_deployment_config
-  codedeploy_auto_scaling_group_names = var.cicd_codedeploy_auto_scaling_group_names
-  codedeploy_target_tag_key           = var.cicd_codedeploy_target_tag_key
-  codedeploy_target_tag_value         = var.cicd_codedeploy_target_tag_value
+  codedeploy_deployment_config        = each.value.codedeploy_deployment_config
+  codedeploy_auto_scaling_group_names = each.value.codedeploy_auto_scaling_group_names
+  codedeploy_target_tag_key           = each.value.codedeploy_target_tag_key
+  codedeploy_target_tag_value         = each.value.codedeploy_target_tag_value
 }
+
+// ----------------------------------------------------------------------------
+// 9) ECR：集中创建镜像仓库，方便 CodeBuild 推送/应用拉取。
+// ----------------------------------------------------------------------------
