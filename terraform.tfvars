@@ -46,3 +46,58 @@ observability_archive_bucket_name     = null  # 如需自定义 S3 名称可在�
 observability_archive_transition_days = 90    # 90 天后转入 Glacier，降低成本
 observability_archive_expiration_days = 365   # 365 天后自动删除归档日志
 observability_archive_force_destroy   = false # 除错环境可设为 true，便于销毁非空桶
+
+# ------------------------- CI/CD (CodeBuild + CodeDeploy) -------------------------
+cicd_codebuild_source_type     = "GitLAb"
+cicd_codebuild_source_location = "git@13.115.65.127:sun_game/game-slot.git"
+cicd_codebuild_buildspec       = "buildspec.yml"
+cicd_codebuild_image           = "aws/codebuild/standard:6.0"
+cicd_codebuild_compute_type    = "BUILD_GENERAL1_SMALL"
+cicd_codebuild_privileged_mode = true
+cicd_codebuild_environment_variables = {
+  IMAGE_REPO = "123456789012.dkr.ecr.ap-southeast-2.amazonaws.com/my-service"
+}
+cicd_codebuild_artifact_path           = "releases"
+cicd_codebuild_log_retention_days      = 30
+cicd_codebuild_timeout_minutes         = 30
+cicd_codebuild_git_clone_depth         = 1
+cicd_codebuild_ecr_access              = true
+cicd_codebuild_extra_policy_statements = []
+cicd_create_artifact_bucket            = true
+cicd_artifact_bucket_name              = null
+cicd_artifact_bucket_force_destroy     = false
+cicd_existing_artifact_bucket_arn      = null
+cicd_codedeploy_deployment_config      = "CodeDeployDefault.AllAtOnce"
+cicd_codedeploy_auto_scaling_group_names = [
+  "mycorp-dev-app-asg"
+]
+cicd_codedeploy_target_tag_key   = null
+cicd_codedeploy_target_tag_value = null
+
+# ------------------------- ECR 仓库设置 -------------------------
+ecr_repository_name      = "mycorp-dev-app"
+ecr_image_tag_mutability = "IMMUTABLE"
+ecr_scan_on_push         = true
+ecr_encryption_type      = "AES256"
+ecr_kms_key_arn          = null
+# 示例 lifecycle policy：仅保留 release- 前缀最新 10 个镜像
+ecr_lifecycle_policy  = <<POLICY
+{
+  "rules": [
+    {
+      "rulePriority": 1,
+      "description": "Keep last 10 release images",
+      "selection": {
+        "tagStatus": "tagged",
+        "tagPrefixList": ["release-"],
+        "countType": "imageCountMoreThan",
+        "countNumber": 10
+      },
+      "action": {
+        "type": "expire"
+      }
+    }
+  ]
+}
+POLICY
+ecr_repository_policy = null

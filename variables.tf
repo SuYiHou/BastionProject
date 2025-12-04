@@ -200,3 +200,181 @@ variable "observability_archive_force_destroy" {
   description = "Allow Terraform to delete the archive bucket even if it contains objects"
   default     = false
 }
+
+// -----------------------------------------------------------------------------
+// CI/CD 相关变量：用于驱动 CodeBuild + CodeDeploy 模块。全部字段都有默认值或示例，
+// 你只需根据仓库类型、部署目标填写对应值即可。
+// -----------------------------------------------------------------------------
+variable "cicd_codebuild_source_type" {
+  type        = string
+  description = "CodeBuild 源类型 (GITHUB / CODECOMMIT / S3 等)"
+}
+
+variable "cicd_codebuild_source_location" {
+  type        = string
+  description = "源码位置：例如 GitHub repo HTTPS URL 或 CodeCommit 仓库名"
+}
+
+variable "cicd_codebuild_buildspec" {
+  type        = string
+  description = "buildspec 文件路径"
+  default     = "buildspec.yml"
+}
+
+variable "cicd_codebuild_image" {
+  type        = string
+  description = "构建容器镜像"
+  default     = "aws/codebuild/standard:6.0"
+}
+
+variable "cicd_codebuild_compute_type" {
+  type        = string
+  description = "构建机规格"
+  default     = "BUILD_GENERAL1_SMALL"
+}
+
+variable "cicd_codebuild_privileged_mode" {
+  type        = bool
+  description = "是否启用 Docker in Docker（构建镜像时需要）"
+  default     = false
+}
+
+variable "cicd_codebuild_environment_variables" {
+  type        = map(string)
+  description = "构建环境变量"
+  default     = {}
+}
+
+variable "cicd_codebuild_artifact_path" {
+  type        = string
+  description = "输出产物在 S3 桶内的路径前缀"
+  default     = "build"
+}
+
+variable "cicd_codebuild_log_retention_days" {
+  type        = number
+  description = "CodeBuild 日志保留天数"
+  default     = 30
+}
+
+variable "cicd_codebuild_timeout_minutes" {
+  type        = number
+  description = "构建超时时长"
+  default     = 30
+}
+
+variable "cicd_codebuild_git_clone_depth" {
+  type        = number
+  description = "Git shallow clone 深度"
+  default     = 1
+}
+
+variable "cicd_codebuild_ecr_access" {
+  type        = bool
+  description = "构建任务是否需要访问 ECR（推/拉镜像）"
+  default     = false
+}
+
+variable "cicd_codebuild_extra_policy_statements" {
+  type = list(object({
+    sid       = optional(string)
+    effect    = optional(string, "Allow")
+    actions   = list(string)
+    resources = list(string)
+  }))
+  description = "需要额外授予 CodeBuild 的 IAM 权限"
+  default     = []
+}
+
+variable "cicd_create_artifact_bucket" {
+  type        = bool
+  description = "是否让模块自动创建产物桶"
+  default     = true
+}
+
+variable "cicd_artifact_bucket_name" {
+  type        = string
+  description = "自定义 artifact 桶名（不填则按前缀自动生成）"
+  default     = null
+}
+
+variable "cicd_artifact_bucket_force_destroy" {
+  type        = bool
+  description = "销毁时是否允许强删非空桶"
+  default     = false
+}
+
+variable "cicd_existing_artifact_bucket_arn" {
+  type        = string
+  description = "如果已有 artifact 桶，直接填 ARN 并把 cicd_create_artifact_bucket 设为 false"
+  default     = null
+}
+
+variable "cicd_codedeploy_deployment_config" {
+  type        = string
+  description = "CodeDeploy 部署策略"
+  default     = "CodeDeployDefault.AllAtOnce"
+}
+
+variable "cicd_codedeploy_auto_scaling_group_names" {
+  type        = list(string)
+  description = "需要部署的 AutoScaling Group 列表"
+  default     = []
+}
+
+variable "cicd_codedeploy_target_tag_key" {
+  type        = string
+  description = "若无 ASG，可通过 EC2 标签筛选，提供 Tag Key"
+  default     = null
+}
+
+variable "cicd_codedeploy_target_tag_value" {
+  type        = string
+  description = "搭配 Key 使用的 Tag 值"
+  default     = null
+}
+
+// -----------------------------------------------------------------------------
+// ECR 仓库参数：为了让 CodeBuild/业务统一推送镜像，建议在 Terraform 中集中创建仓库。
+// -----------------------------------------------------------------------------
+variable "ecr_repository_name" {
+  type        = string
+  description = "ECR 仓库名称"
+  default     = null
+}
+
+variable "ecr_image_tag_mutability" {
+  type        = string
+  description = "镜像 tag 是否允许覆盖 (MUTABLE/IMMUTABLE)"
+  default     = "MUTABLE"
+}
+
+variable "ecr_scan_on_push" {
+  type        = bool
+  description = "推送后是否自动扫描镜像安全性"
+  default     = true
+}
+
+variable "ecr_encryption_type" {
+  type        = string
+  description = "AES256 或 KMS"
+  default     = "AES256"
+}
+
+variable "ecr_kms_key_arn" {
+  type        = string
+  description = "若选择 KMS 加密，请提供密钥 ARN"
+  default     = null
+}
+
+variable "ecr_lifecycle_policy" {
+  type        = string
+  description = "Lifecycle Policy JSON，用于清理旧镜像"
+  default     = null
+}
+
+variable "ecr_repository_policy" {
+  type        = string
+  description = "Repository policy JSON，控制哪些账号/角色可访问"
+  default     = null
+}

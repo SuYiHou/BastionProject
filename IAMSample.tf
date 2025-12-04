@@ -6,15 +6,15 @@ module "iam_bastion_example" {
   name                    = "${var.name_prefix}-${var.environment}-bastion-role"
   environment             = var.environment
   component               = "bastion"
-  assume_role_services = ["ec2.amazonaws.com"]
-  managed_policy_arns = ["arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"]
+  assume_role_services    = ["ec2.amazonaws.com"]
+  managed_policy_arns     = ["arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"]
   create_instance_profile = true
 
   inline_policy_statements = {
     "restrict-describe" = [
       {
-        sid = "DescribeNetworking"
-        actions = ["ec2:DescribeInstances", "ec2:DescribeSubnets"]
+        sid       = "DescribeNetworking"
+        actions   = ["ec2:DescribeInstances", "ec2:DescribeSubnets"]
         resources = ["*"]
       }
     ]
@@ -27,9 +27,9 @@ module "iam_bastion_example" {
 module "iam_eks_cluster_example" {
   source = "./module/iam"
 
-  name        = "${var.name_prefix}-${var.environment}-eks-cluster-role"
-  environment = var.environment
-  component   = "eks-cluster"
+  name                 = "${var.name_prefix}-${var.environment}-eks-cluster-role"
+  environment          = var.environment
+  component            = "eks-cluster"
   assume_role_services = ["eks.amazonaws.com"]
 
   managed_policy_arns = [
@@ -44,9 +44,9 @@ module "iam_eks_cluster_example" {
 module "iam_eks_node_example" {
   source = "./module/iam"
 
-  name        = "${var.name_prefix}-${var.environment}-eks-node-role"
-  environment = var.environment
-  component   = "eks-node"
+  name                 = "${var.name_prefix}-${var.environment}-eks-node-role"
+  environment          = var.environment
+  component            = "eks-node"
   assume_role_services = ["ec2.amazonaws.com"]
 
   managed_policy_arns = [
@@ -58,7 +58,7 @@ module "iam_eks_node_example" {
   inline_policy_statements = {
     "ssm-logs" = [
       {
-        actions = ["logs:PutLogEvents", "logs:CreateLogStream"]
+        actions   = ["logs:PutLogEvents", "logs:CreateLogStream"]
         resources = [module.observability.application_log_group_arn]
       }
     ]
@@ -72,16 +72,16 @@ module "iam_eks_node_example" {
 module "iam_irsa_fluentbit" {
   source = "./module/iam"
 
-  name        = "${var.name_prefix}-${var.environment}-irsa-fluentbit"
-  environment = var.environment
-  component   = "observability"
+  name                 = "${var.name_prefix}-${var.environment}-irsa-fluentbit"
+  environment          = var.environment
+  component            = "observability"
   assume_role_services = ["sts.amazonaws.com"]
 
   inline_policy_statements = {
     "cw-logs" = [
       {
-        sid = "WriteApplicationLogs"
-        actions = ["logs:PutLogEvents", "logs:CreateLogStream", "logs:DescribeLogStreams"]
+        sid       = "WriteApplicationLogs"
+        actions   = ["logs:PutLogEvents", "logs:CreateLogStream", "logs:DescribeLogStreams"]
         resources = [module.observability.application_log_group_arn]
       }
     ]
@@ -104,16 +104,16 @@ module "iam_irsa_fluentbit" {
 module "iam_security_audit" {
   source = "./module/iam"
 
-  name        = "${var.name_prefix}-${var.environment}-security-audit"
-  environment = var.environment
-  component   = "security"
+  name             = "${var.name_prefix}-${var.environment}-security-audit"
+  environment      = var.environment
+  component        = "security"
   assume_role_arns = ["arn:aws:iam::123456789012:root"] # 允许指定审计账号承担
 
   managed_policy_arns = ["arn:aws:iam::aws:policy/SecurityAudit"]
   inline_policy_statements = {
     "cw-read" = [
       {
-        actions = ["logs:GetLogEvents", "logs:DescribeLogGroups"]
+        actions   = ["logs:GetLogEvents", "logs:DescribeLogGroups"]
         resources = ["*"]
       }
     ]

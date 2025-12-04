@@ -237,3 +237,65 @@ module "eks" {
   // 需在 EKS 启用日志前确保 CloudWatch Log Group 已创建，避免默认 7 天保留期。
   depends_on = [module.observability]
 }
+
+// ----------------------------------------------------------------------------
+// 9) ECR：集中创建镜像仓库，方便 CodeBuild 推送/应用拉取。
+// ----------------------------------------------------------------------------
+module "ecr" {
+  source = "./module/ecr"
+
+  environment          = var.environment
+  repository_name      = coalesce(var.ecr_repository_name, "${var.name_prefix}-${var.environment}-app")
+  image_tag_mutability = var.ecr_image_tag_mutability
+  scan_on_push         = var.ecr_scan_on_push
+  encryption_type      = var.ecr_encryption_type
+  kms_key_arn          = var.ecr_kms_key_arn
+  lifecycle_policy     = var.ecr_lifecycle_policy
+  repository_policy    = var.ecr_repository_policy
+}
+
+locals {
+  cicd_env_vars = var.ecr_repository_name != null && trim(var.ecr_repository_name) != "" ? merge(
+    var.cicd_codebuild_environment_variables,
+    { IMAGE_REPO = module.ecr.repository_url }
+  ) : var.cicd_codebuild_environment_variables
+}
+
+// ----------------------------------------------------------------------------
+// 10) CI/CD：CodeBuild + CodeDeploy，负责把 Git 仓库里的代码构建成产物，
+//     再将产物推送到 AutoScaling 组或打上特定标签的 EC2 实例。
+//     你需要提供仓库地址、buildspec、ASG 名称或标签这类信息。
+// ----------------------------------------------------------------------------
+module "cicd" {
+  source = "./module/cicd"
+
+  environment = var.environment
+  name_prefix = var.name_prefix
+
+  // Artifact 桶配置：可以沿用默认自动创建，也可传入既有桶名/ARN。
+  create_artifact_bucket        = var.cicd_create_artifact_bucket
+  artifact_bucket_name          = var.cicd_artifact_bucket_name
+  artifact_bucket_force_destroy = var.cicd_artifact_bucket_force_destroy
+  existing_artifact_bucket_arn  = var.cicd_existing_artifact_bucket_arn
+
+  // CodeBuild 基础信息：源码类型、仓库地址、buildspec、构建容器、环境变量等。
+  codebuild_source_type             = var.cicd_codebuild_source_type
+  codebuild_source_location         = var.cicd_codebuild_source_location
+  codebuild_buildspec               = var.cicd_codebuild_buildspec
+  codebuild_image                   = var.cicd_codebuild_image
+  codebuild_compute_type            = var.cicd_codebuild_compute_type
+  codebuild_privileged_mode         = var.cicd_codebuild_privileged_mode
+  codebuild_environment_variables   = local.cicd_env_vars
+  codebuild_artifact_path           = var.cicd_codebuild_artifact_path
+  codebuild_log_retention_in_days   = var.cicd_codebuild_log_retention_days
+  codebuild_timeout_minutes         = var.cicd_codebuild_timeout_minutes
+  codebuild_git_clone_depth         = var.cicd_codebuild_git_clone_depth
+  codebuild_ecr_access              = var.cicd_codebuild_ecr_access
+  codebuild_extra_policy_statements = var.cicd_codebuild_extra_policy_statements
+
+  // CodeDeploy 目标：传入 AutoScaling Group 名称或 EC2 Tag 键值（二选一）。
+  codedeploy_deployment_config        = var.cicd_codedeploy_deployment_config
+  codedeploy_auto_scaling_group_names = var.cicd_codedeploy_auto_scaling_group_names
+  codedeploy_target_tag_key           = var.cicd_codedeploy_target_tag_key
+  codedeploy_target_tag_value         = var.cicd_codedeploy_target_tag_value
+}
